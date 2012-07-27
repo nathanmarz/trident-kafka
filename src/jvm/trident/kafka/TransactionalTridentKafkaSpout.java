@@ -13,7 +13,7 @@ import storm.trident.topology.TransactionAttempt;
 import trident.kafka.KafkaConfig.StaticHosts;
 
 
-public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<BatchMeta> {
+public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<Map> {
     
     KafkaConfig _config;
     
@@ -23,7 +23,7 @@ public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<
     
     class Coordinator implements IPartitionedTridentSpout.Coordinator {
         @Override
-        public int numPartitions() {
+        public long numPartitions() {
             return computeNumPartitions();
         }
 
@@ -32,7 +32,7 @@ public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<
         }
     }
     
-    class Emitter implements IPartitionedTridentSpout.Emitter<BatchMeta> {
+    class Emitter implements IPartitionedTridentSpout.Emitter<Map> {
         StaticPartitionConnections _connections;
         int partitionsPerHost;
         
@@ -43,21 +43,21 @@ public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<
         }
         
         @Override
-        public BatchMeta emitPartitionBatchNew(TransactionAttempt attempt, TridentCollector collector, int partition, BatchMeta lastMeta) {
+        public Map emitPartitionBatchNew(TransactionAttempt attempt, TridentCollector collector, int partition, Map lastMeta) {
             SimpleConsumer consumer = _connections.getConsumer(partition);
 
             return KafkaUtils.emitPartitionBatchNew(_config, partition, consumer, attempt, collector, lastMeta);
         }
 
         @Override
-        public void emitPartitionBatch(TransactionAttempt attempt, TridentCollector collector, int partition, BatchMeta meta) {
+        public void emitPartitionBatch(TransactionAttempt attempt, TridentCollector collector, int partition, Map meta) {
             SimpleConsumer consumer = _connections.getConsumer(partition);
-                        
-            ByteBufferMessageSet msgs = consumer.fetch(new FetchRequest(_config.topic, partition % partitionsPerHost, meta.offset, _config.fetchSizeBytes));
-            long offset = meta.offset;
+            long offset = (Long) meta.get("offset");
+            long nextOffset = (Long) meta.get("nextOffset");
+            ByteBufferMessageSet msgs = consumer.fetch(new FetchRequest(_config.topic, partition % partitionsPerHost, offset, _config.fetchSizeBytes));
             for(MessageAndOffset msg: msgs) {
-                if(offset == meta.nextOffset) break;
-                if(offset > meta.nextOffset) {
+                if(offset == nextOffset) break;
+                if(offset > nextOffset) {
                     throw new RuntimeException("Error when re-emitting batch. overshot the end offset");
                 }
                 KafkaUtils.emit(_config, attempt, collector, msg.message());
@@ -94,8 +94,6 @@ public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<
     
     @Override
     public Map<String, Object> getComponentConfiguration() {
-        backtype.storm.Config conf = new backtype.storm.Config();
-        conf.registerSerialization(BatchMeta.class);
-        return conf;
+        return null;
     }
 }

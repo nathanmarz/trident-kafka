@@ -2,7 +2,9 @@ package trident.kafka;
 
 import backtype.storm.utils.Utils;
 import java.net.ConnectException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import kafka.api.FetchRequest;
 import kafka.javaapi.consumer.SimpleConsumer;
 import kafka.javaapi.message.ByteBufferMessageSet;
@@ -15,11 +17,11 @@ import trident.kafka.KafkaConfig.StaticHosts;
 public class KafkaUtils {
     
     
-     public static BatchMeta emitPartitionBatchNew(KafkaConfig config, int partition, SimpleConsumer consumer, TransactionAttempt attempt, TridentCollector collector, BatchMeta lastMeta) {
+     public static Map emitPartitionBatchNew(KafkaConfig config, int partition, SimpleConsumer consumer, TransactionAttempt attempt, TridentCollector collector, Map lastMeta) {
          StaticHosts hosts = config.hosts;
          long offset = 0;
          if(lastMeta!=null) {
-             offset = lastMeta.nextOffset;
+             offset = (Long) lastMeta.get("nextOffset");
          }
          ByteBufferMessageSet msgs;
          try {
@@ -36,9 +38,9 @@ public class KafkaUtils {
              emit(config, attempt, collector, msg.message());
              endoffset = msg.offset();
          }
-         BatchMeta newMeta = new BatchMeta();
-         newMeta.offset = offset;
-         newMeta.nextOffset = endoffset;
+         Map newMeta = new HashMap();
+         newMeta.put("offset", offset);
+         newMeta.put("nextOffset", endoffset);
          return newMeta;
      }
      

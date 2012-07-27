@@ -20,8 +20,8 @@ public class Tester {
         KafkaConfig kafkaConf = new KafkaConfig(KafkaConfig.StaticHosts.fromHostString(hosts, 3), "test");
         kafkaConf.scheme = new StringScheme();
         topology.newStream("mykafka", new TransactionalTridentKafkaSpout(kafkaConf))
-                .aggregate(new Count(), new Fields("count"))
-                .each(new Fields("count"), new Debug());
+//                .aggregate(new Count(), new Fields("count"))
+                .each(new Fields("str"), new Debug());
         
         LocalCluster cluster = new LocalCluster();
         

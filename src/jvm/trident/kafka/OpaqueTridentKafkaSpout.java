@@ -2,6 +2,7 @@ package trident.kafka;
 
 import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Fields;
+import java.util.HashMap;
 import java.util.Map;
 import kafka.javaapi.consumer.SimpleConsumer;
 import org.apache.log4j.Logger;
@@ -11,7 +12,7 @@ import storm.trident.topology.TransactionAttempt;
 import trident.kafka.KafkaConfig.StaticHosts;
 
 
-public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<BatchMeta> {
+public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<Map> {
     public static final Logger LOG = Logger.getLogger(OpaqueTridentKafkaSpout.class);
     
     KafkaConfig _config;
@@ -21,7 +22,7 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<B
     }
     
     @Override
-    public IOpaquePartitionedTridentSpout.Emitter<BatchMeta> getEmitter(Map conf, TopologyContext context) {
+    public IOpaquePartitionedTridentSpout.Emitter<Map> getEmitter(Map conf, TopologyContext context) {
         return new Emitter();
     }
     
@@ -37,9 +38,7 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<B
     
     @Override
     public Map<String, Object> getComponentConfiguration() {
-        backtype.storm.Config conf = new backtype.storm.Config();
-        conf.registerSerialization(BatchMeta.class);
-        return conf;
+        return null;
     }
     
     class Coordinator implements IOpaquePartitionedTridentSpout.Coordinator {
@@ -48,7 +47,7 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<B
         }
     }
     
-    class Emitter implements IOpaquePartitionedTridentSpout.Emitter<BatchMeta> {
+    class Emitter implements IOpaquePartitionedTridentSpout.Emitter<Map> {
         StaticPartitionConnections _connections;
         
         public Emitter() {
@@ -56,7 +55,7 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<B
         }
 
         @Override
-        public BatchMeta emitPartitionBatch(TransactionAttempt attempt, TridentCollector collector, int partition, BatchMeta lastMeta) {
+        public Map emitPartitionBatch(TransactionAttempt attempt, TridentCollector collector, int partition, Map lastMeta) {
             try {
                 SimpleConsumer consumer = _connections.getConsumer(partition);
                 return KafkaUtils.emitPartitionBatchNew(_config, partition, consumer, attempt, collector, lastMeta);
@@ -65,16 +64,16 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<B
                 if(lastMeta==null) {
                     return null;
                 } else {
-                    BatchMeta ret = new BatchMeta();
-                    ret.offset = lastMeta.nextOffset;
-                    ret.nextOffset = lastMeta.nextOffset;
+                    Map ret = new HashMap();
+                    ret.put("offset", lastMeta.get("nextOffset"));
+                    ret.put("nextOffset", lastMeta.get("nextOffset"));
                     return ret;
                 }
             }
         }
 
         @Override
-        public int numPartitions() {
+        public long numPartitions() {
             StaticHosts hosts = (StaticHosts) _config.hosts;
             return hosts.hosts.size() * hosts.partitionsPerHost;
         }
