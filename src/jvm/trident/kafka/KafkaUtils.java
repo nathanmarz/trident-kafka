@@ -17,11 +17,17 @@ import trident.kafka.KafkaConfig.StaticHosts;
 public class KafkaUtils {
     
     
-     public static Map emitPartitionBatchNew(KafkaConfig config, int partition, SimpleConsumer consumer, TransactionAttempt attempt, TridentCollector collector, Map lastMeta) {
+     public static Map emitPartitionBatchNew(KafkaConfig config, int partition, SimpleConsumer consumer, TransactionAttempt attempt, TridentCollector collector, Map lastMeta, String topologyInstanceId) {
          StaticHosts hosts = config.hosts;
-         long offset = 0;
+         long offset;
          if(lastMeta!=null) {
-             offset = (Long) lastMeta.get("nextOffset");
+             if(config.forceFromStart && !topologyInstanceId.equals(lastMeta.get("instanceId"))) {
+                 offset = consumer.getOffsetsBefore(config.topic, partition % hosts.partitionsPerHost, config.startOffsetTime, 1)[0];
+             } else {
+                 offset = (Long) lastMeta.get("nextOffset");                 
+             }
+         } else {
+             offset = consumer.getOffsetsBefore(config.topic, partition % hosts.partitionsPerHost, -1, 1)[0];
          }
          ByteBufferMessageSet msgs;
          try {
@@ -41,6 +47,7 @@ public class KafkaUtils {
          Map newMeta = new HashMap();
          newMeta.put("offset", offset);
          newMeta.put("nextOffset", endoffset);
+         newMeta.put("instanceId", topologyInstanceId);
          return newMeta;
      }
      

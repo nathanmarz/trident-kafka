@@ -4,6 +4,7 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Fields;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import kafka.javaapi.consumer.SimpleConsumer;
 import org.apache.log4j.Logger;
 import storm.trident.operation.TridentCollector;
@@ -16,6 +17,7 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<M
     public static final Logger LOG = Logger.getLogger(OpaqueTridentKafkaSpout.class);
     
     KafkaConfig _config;
+    String _topologyInstanceId = UUID.randomUUID().toString();
     
     public OpaqueTridentKafkaSpout(KafkaConfig config) {
         _config = config;
@@ -58,7 +60,7 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<M
         public Map emitPartitionBatch(TransactionAttempt attempt, TridentCollector collector, int partition, Map lastMeta) {
             try {
                 SimpleConsumer consumer = _connections.getConsumer(partition);
-                return KafkaUtils.emitPartitionBatchNew(_config, partition, consumer, attempt, collector, lastMeta);
+                return KafkaUtils.emitPartitionBatchNew(_config, partition, consumer, attempt, collector, lastMeta, _topologyInstanceId);
             } catch(FailedFetchException e) {
                 LOG.warn("Failed to fetch from partition " + partition);
                 if(lastMeta==null) {
