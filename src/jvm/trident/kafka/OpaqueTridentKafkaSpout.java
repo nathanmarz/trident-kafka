@@ -47,6 +47,11 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<M
         @Override
         public void close() {
         }
+
+        @Override
+        public boolean isReady(long txid) {
+            return true;
+        }
     }
     
     class Emitter implements IOpaquePartitionedTridentSpout.Emitter<Map> {

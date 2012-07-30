@@ -33,6 +33,11 @@ public class TransactionalTridentKafkaSpout implements IPartitionedTridentSpout<
         @Override
         public void close() {
         }
+
+        @Override
+        public boolean isReady(long txid) {
+            return true;
+        }
     }
     
     class Emitter implements IPartitionedTridentSpout.Emitter<Map> {
