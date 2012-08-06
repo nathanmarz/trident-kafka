@@ -1,4 +1,4 @@
-(defproject storm/trident-kafka "0.0.1-SNAPSHOT"
+(defproject storm/trident-kafka "0.0.2-wip1"
   :source-path "src/clj"
   :java-source-path "src/jvm"
   :javac-options {:debug "true" :fork "true"}
