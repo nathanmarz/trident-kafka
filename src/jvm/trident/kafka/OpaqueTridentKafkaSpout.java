@@ -46,11 +46,12 @@ public class OpaqueTridentKafkaSpout implements IOpaquePartitionedTridentSpout<M
     class Coordinator implements IOpaquePartitionedTridentSpout.Coordinator {
         @Override
         public void close() {
+            _config.coordinator.close();
         }
 
         @Override
         public boolean isReady(long txid) {
-            return true;
+            return _config.coordinator.isReady(txid);
         }
     }
     

@@ -30,6 +30,7 @@ public class KafkaConfig implements Serializable {
     public String topic;
     public long startOffsetTime = -2;
     public boolean forceFromStart = false;
+    public IBatchCoordinator coordinator = new DefaultCoordinator();
 
     public KafkaConfig(StaticHosts hosts, String topic) {
         this.hosts = hosts;
