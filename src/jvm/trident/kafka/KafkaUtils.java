@@ -55,6 +55,8 @@ public class KafkaUtils {
      
      public static void emit(KafkaConfig config, TransactionAttempt attempt, TridentCollector collector, Message msg) {
          List<Object> values = config.scheme.deserialize(Utils.toByteArray(msg.payload()));
-         collector.emit(values);           
+         if(values!=null) {
+             collector.emit(values);
+         }
      }
 }
