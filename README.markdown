@@ -1,5 +1,1 @@
-trident-kafka provides Trident spouts for Apache Kafka 0.7.
-
-1. Add blacklisting of Kafka servers in `OpaqueTridentKafkaSpout`
-2. Discover Kafka brokers dynamically through Zookeeper instead of using a static list of brokers
-3. Discover number of partitions / topic / host dynamically
+This project has been moved to the storm.kafka.trident package in [storm-kafka](https://github.com/nathanmarz/storm-contrib/tree/master/storm-kafka)
